@@ -1,4 +1,7 @@
 # AHK-Expand
+
+AHK 使用 1.1.33.11 版本
+
 扩展Windows Alt按键功能
 
 1. 扩展CapsLock按键功能，处理逻辑类似macOS。实现短按切换输入法，长按切换大小写
