@@ -1,4 +1,5 @@
-﻿; 将Ctrl组合常用功能键映射为 Alt触发
+﻿#Requires AutoHotkey v1.1.33+
+; 将Ctrl组合常用功能键映射为 Alt触发
 ; Ctrl + c/x/v/a/s/w/z/f/Left/Right
 ; Ctrl + Shift + z/Left/Right
 
@@ -14,44 +15,14 @@
 #SingleInstance force
 #NoEnv
 
-; 检查当前活动窗口是否不是游戏窗口
-; 返回: true - 不是游戏窗口, false - 是游戏窗口
-CheckWindowNotActive() {
-    WinGet, activeWindowId, ID, A               ; 获取当前活动窗口ID
-    WinGet, processName, ProcessName, ahk_id %activeWindowId%  ; 获取窗口进程名
-    WinGetClass, windowClass, ahk_id %activeWindowId%  ; 获取窗口类名
-
-    ; 定义需要检查的窗口类名数组,需要排除的 ahk_class
-    windowClasses := ["mashinky", "grcWindow"]
-
-    ; 定义需要检查的进程名数组,需要排除的 ahk_exe
-    processNames := ["BlackDesert64_CN.exe", "Cities2.exe", "Captain of Industry.exe", "inZOI-Win64-Shipping.exe", "Factorio.exe"]
-
-    ; 检查窗口类是否在允许的列表中
-    for index, allowedClass in windowClasses {
-        if (windowClass = allowedClass) {
-            return false  ; 窗口类匹配，是游戏窗口
-        }
-    }
-
-    ; 检查进程名是否在允许的列表中
-    for index, allowedProcess in processNames {
-        if (processName = allowedProcess) {
-            return false  ; 进程名匹配，是游戏窗口
-        }
-    }
-
-    return true  ; 窗口既不是游戏窗口类，进程名也不匹配
-}
-
-; 初始化键盘钩子功能
+; 初始化键盘钩子功能（仅注册热键，不启动定时器）
 InitKeyboardHook() {
     global
     ; 调试信息
     Hotkey, !u, DebugHotkey
     ; 禁用Alt键
     Hotkey, Alt, AltDisable
-    
+
     ; 基本功能键映射
     Hotkey, $!c, CopyHotkey
     Hotkey, $!x, CutHotkey
@@ -63,16 +34,16 @@ InitKeyboardHook() {
     Hotkey, $!z, UndoHotkey
     Hotkey, $!+z, RedoHotkey
     Hotkey, $!f, FindHotkey
-    
+
     ; 查找功能
     Hotkey, $!g, FindNextHotkey
     Hotkey, $!+g, FindPrevHotkey
-    
+
     ; 其他功能
     Hotkey, $!t, NewTabHotkey
     Hotkey, $!+t, ReopenTabHotkey
     Hotkey, $!r, ReloadHotkey
-    
+
     ; 删除和导航功能
     Hotkey, $!Left, HomeHotkey
     Hotkey, $!Right, EndHotkey
@@ -80,13 +51,48 @@ InitKeyboardHook() {
     Hotkey, $!+Right, SelectToEndHotkey
 }
 
-; 禁用键盘钩子功能
+; 重新启用键盘钩子功能（专门用于重新启用已禁用的热键）
+ReEnableKeyboardHook() {
+    ; 调试信息
+    Hotkey, !u, On
+    ; 禁用Alt键
+    Hotkey, Alt, On
+
+    ; 基本功能键映射
+    Hotkey, $!c, On
+    Hotkey, $!x, On
+    Hotkey, $!v, On
+    Hotkey, $!+v, On
+    Hotkey, $!a, On
+    Hotkey, $!s, On
+    Hotkey, $!w, On
+    Hotkey, $!z, On
+    Hotkey, $!+z, On
+    Hotkey, $!f, On
+
+    ; 查找功能
+    Hotkey, $!g, On
+    Hotkey, $!+g, On
+
+    ; 其他功能
+    Hotkey, $!t, On
+    Hotkey, $!+t, On
+    Hotkey, $!r, On
+
+    ; 删除和导航功能
+    Hotkey, $!Left, On
+    Hotkey, $!Right, On
+    Hotkey, $!+Left, On
+    Hotkey, $!+Right, On
+}
+
+; 禁用键盘钩子功能（仅禁用热键，不停止定时器）
 DisableKeyboardHook() {
     ; 调试信息
     Hotkey, !u, Off
     ; 禁用Alt键
     Hotkey, Alt, Off
-    
+
     ; 基本功能键映射
     Hotkey, $!c, Off
     Hotkey, $!x, Off
@@ -98,18 +104,17 @@ DisableKeyboardHook() {
     Hotkey, $!z, Off
     Hotkey, $!+z, Off
     Hotkey, $!f, Off
-    
+
     ; 查找功能
     Hotkey, $!g, Off
     Hotkey, $!+g, Off
-    
+
     ; 其他功能
     Hotkey, $!t, Off
     Hotkey, $!+t, Off
     Hotkey, $!r, Off
-    
+
     ; 删除和导航功能
-    Hotkey, $!Backspace, Off
     Hotkey, $!Left, Off
     Hotkey, $!Right, Off
     Hotkey, $!+Left, Off
@@ -118,11 +123,7 @@ DisableKeyboardHook() {
 
 ; 调试热键
 DebugHotkey() {
-    if (!WinActive("ahk_exe 语雀.exe")) {
-        MsgBox, active.
-    } else {
-        MsgBox, not active.
-    }
+    DebugCurrentProcess()
 }
 
 ; 禁用Alt键
@@ -225,16 +226,161 @@ SelectToEndHotkey() {
     Send +{End}
 }
 
-; 条件初始化
-If CheckWindowNotActive() {
-    InitKeyboardHook()
+; 启动实时窗口检查定时器（独立函数）
+StartWindowMonitoring() {
+    SetTimer, CheckActiveWindowByProcess, 500  ; 每500毫秒检查一次当前窗口进程
+}
+
+; 停止实时窗口检查定时器（独立函数）
+StopWindowMonitoring() {
+    SetTimer, CheckActiveWindowByProcess, Off
+}
+
+; 从配置文件加载游戏进程列表
+LoadGameProcesses() {
+    static gameProcesses := []
+    static lastConfigCheck := 0
+    static configCheckInterval := 5000  ; 每5秒检查一次配置文件变化
+
+    ; 检查是否需要重新加载配置文件
+    currentTime := A_TickCount
+    if (currentTime - lastConfigCheck < configCheckInterval) {
+        return gameProcesses
+    }
+
+    lastConfigCheck := currentTime
+
+    ; 清空现有数组
+    gameProcesses := []
+
+    ; 修改配置文件路径计算方式，使用相对于KeyboardHook.ahk文件的路径
+    ; 获取KeyboardHook.ahk文件的完整路径
+    scriptPath := A_LineFile  ; A_LineFile包含当前函数所在文件的完整路径
+    SplitPath, scriptPath, , scriptDir  ; 提取文件所在目录
+    configPath := scriptDir . "\..\config\game_processes.ini"  ; 相对于KeyboardHook.ahk的路径
+
+    OutputDebug, TEXT("Loading game processes from: " . %configPath% .)
+
+    if (!FileExist(configPath)) {
+        ; 如果配置文件不存在，使用默认列表
+        gameProcesses := ["BlackDesert64_CN.exe", "Cities2.exe", "Captain of Industry.exe", "inZOI-Win64-Shipping.exe", "Factorio.exe"]
+        return gameProcesses
+    }
+
+    ; 读取配置文件
+    Loop, Read, %configPath%
+    {
+        ; 跳过空行和注释行
+        if (Trim(A_LoopReadLine) = "" || SubStr(Trim(A_LoopReadLine), 1, 1) = ";") {
+            continue
+        }
+
+        ; 跳过节标题行
+        if (SubStr(Trim(A_LoopReadLine), 1, 1) = "[") {
+            continue
+        }
+
+        ; 添加进程名到数组
+        processName := Trim(A_LoopReadLine)
+        if (processName != "") {
+            gameProcesses.Push(processName)
+        }
+    }
+
+    ; 如果配置文件为空，使用默认列表
+    if (gameProcesses.Length() = 0) {
+        gameProcesses := ["BlackDesert64_CN.exe", "Cities2.exe", "Captain of Industry.exe", "inZOI-Win64-Shipping.exe", "Factorio.exe"]
+    }
+
+    return gameProcesses
+}
+
+; 通过进程名实时检查当前活动窗口并根据情况启用/禁用键盘钩子
+; 配置文件版本
+CheckActiveWindowByProcess() {
+    static lastWindowState := true  ; 记录上一次的窗口状态，true=启用热键，false=禁用热键
+    static lastProcessName := ""     ; 记录上一次的进程名
+    static gameProcessesObject := {} ; 游戏进程查找对象，实现O(1)查找
+
+    ; 获取当前游戏进程列表（带缓存）
+    gameProcesses := LoadGameProcesses()
+
+    ; 如果进程列表有变化，更新查找对象
+    if (!gameProcessesObject.HasKey("_hash") || gameProcessesObject["_hash"] != gameProcesses.Length()) {
+        gameProcessesObject := {}  ; 清空对象
+        gameProcessesObject["_hash"] := gameProcesses.Length()
+        for index, process in gameProcesses {
+            gameProcessesObject[process] := true
+        }
+    }
+
+    ; 获取当前活动窗口ID
+    WinGet, activeWindowId, ID, A
+
+    ; 如果没有活动窗口，直接返回
+    if (!activeWindowId) {
+        return
+    }
+
+    ; 获取窗口进程名
+    WinGet, processName, ProcessName, ahk_id %activeWindowId%
+
+    ; 如果获取进程名失败或进程名为空，直接返回
+    if (!processName) {
+        return
+    }
+
+    ; 如果进程名没有变化，不进行重复检查
+    if (processName = lastProcessName) {
+        return
+    }
+
+    ; 更新进程名记录
+    lastProcessName := processName
+
+    ; 检查当前进程是否为游戏进程（使用O(1)查找）
+    isGameProcess := gameProcessesObject.HasKey(processName)
+
+    ; 根据当前窗口状态启用或禁用键盘钩子
+    ; lastWindowState true = 上次热键已启用，false = 上次热键已禁用
+    ; isGameProcess true = 当前是游戏进程（应禁用），false = 当前不是游戏进程（应启用）
+
+    if (!isGameProcess) {
+        ; 当前不是游戏进程，应该启用键盘钩子
+        if (!lastWindowState) {
+            ; 从禁用状态切换到启用状态
+            ReEnableKeyboardHook()  ; 使用重新启用函数而不是重新初始化
+            lastWindowState := true
+            ToolTip, 键盘钩子已启用 - 当前窗口: %processName%
+            SetTimer, RemoveWindowStateToolTip, -2000
+        }
+    } else {
+        ; 当前是游戏进程，应该禁用键盘钩子
+        if (lastWindowState) {
+            ; 从启用状态切换到禁用状态
+            DisableKeyboardHook()
+            lastWindowState := false
+            ToolTip, 键盘钩子已禁用 - 检测到游戏: %processName%
+            SetTimer, RemoveWindowStateToolTip, -2000
+        }
+    }
+}
+
+RemoveWindowStateToolTip() {
+    ToolTip
+}
+
+; 获取当前窗口进程名的调试函数
+DebugCurrentProcess() {
+    WinGet, activeWindowId, ID, A
+    WinGet, processName, ProcessName, ahk_id %activeWindowId%
+    WinGetClass, windowClass, ahk_id %activeWindowId%
+    MsgBox, 当前窗口进程名: %processName%`n窗口类名: %windowClass%
 }
 
 ; 如果脚本独立运行，自动初始化
 if (A_ScriptName = "KeyboardHook.ahk") {
     ; 独立运行时的初始化逻辑
-    if (CheckWindowNotActive()) {
-        InitKeyboardHook()
-    }
+    InitKeyboardHook()
+    StartWindowMonitoring()  ; 启动窗口监控
 }
-

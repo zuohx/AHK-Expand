@@ -26,13 +26,13 @@ CapsLockHandler() {
     CapsLockPressed := true
     CapsLockStartTime := A_TickCount
     KeyWait, CapsLock
-    
+
     if (!CapsLockPressed)
         return
-    
+
     CapsLockPressed := false
     PressDuration := A_TickCount - CapsLockStartTime
-    
+
     if (PressDuration < LongPressThreshold) {
         SendInput, {Ctrl down}{Shift down}{Shift up}{Ctrl up}
         ToolTipText := "切换输入法"
