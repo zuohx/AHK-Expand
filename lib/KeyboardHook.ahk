@@ -69,14 +69,11 @@ InitKeyboardHook() {
     Hotkey, $!+g, FindPrevHotkey
     
     ; 其他功能
-    Hotkey, $!d, DeleteLineHotkey
-    Hotkey, $!+d, DeleteSpecialHotkey
     Hotkey, $!t, NewTabHotkey
     Hotkey, $!+t, ReopenTabHotkey
     Hotkey, $!r, ReloadHotkey
     
     ; 删除和导航功能
-    Hotkey, $!Backspace, DeleteLineHotkey
     Hotkey, $!Left, HomeHotkey
     Hotkey, $!Right, EndHotkey
     Hotkey, $!+Left, SelectToHomeHotkey
@@ -107,8 +104,6 @@ DisableKeyboardHook() {
     Hotkey, $!+g, Off
     
     ; 其他功能
-    Hotkey, $!d, Off
-    Hotkey, $!+d, Off
     Hotkey, $!t, Off
     Hotkey, $!+t, Off
     Hotkey, $!r, Off
@@ -195,18 +190,6 @@ FindPrevHotkey() {
     Send {Shift Down}{F3 Down}{Shift Up}{F3 Up}
 }
 
-; 删除行
-DeleteLineHotkey() {
-    Send +{Home}
-    Sleep 10
-    Send {Delete}
-}
-
-; 特殊删除
-DeleteSpecialHotkey() {
-    Send {Ctrl Down}{d}{Ctrl Up}
-}
-
 ; 新标签页
 NewTabHotkey() {
     Send {Ctrl Down}{t}{Ctrl Up}
@@ -254,3 +237,4 @@ if (A_ScriptName = "KeyboardHook.ahk") {
         InitKeyboardHook()
     }
 }
+
