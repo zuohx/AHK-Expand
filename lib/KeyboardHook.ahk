@@ -45,6 +45,7 @@ InitKeyboardHook() {
     Hotkey, $!r, ReloadHotkey
 
     ; 删除和导航功能
+    Hotkey, $!Backspace, DeleteLineHotkey
     Hotkey, $!Left, HomeHotkey
     Hotkey, $!Right, EndHotkey
     Hotkey, $!+Left, SelectToHomeHotkey
@@ -80,6 +81,7 @@ ReEnableKeyboardHook() {
     Hotkey, $!r, On
 
     ; 删除和导航功能
+    Hotkey, $!Backspace, Off
     Hotkey, $!Left, On
     Hotkey, $!Right, On
     Hotkey, $!+Left, On
@@ -189,6 +191,13 @@ FindNextHotkey() {
 ; 查找上一个
 FindPrevHotkey() {
     Send {Shift Down}{F3 Down}{Shift Up}{F3 Up}
+}
+
+; 删除行
+DeleteLineHotkey() {
+    Send +{Home}
+    Sleep 10
+    Send {Delete}
 }
 
 ; 新标签页
