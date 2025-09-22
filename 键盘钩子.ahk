@@ -23,13 +23,13 @@ if !A_IsAdmin {
 ; ==================== 库文件包含 ====================
 #Include lib
 ; 包含CapsLock功能库，提供macOS风格的CapsLock行为
-; #Include CapsLockLib.ahk
+#Include CapsLockLib.ahk
 ; 将Ctrl组合常用功能键映射为 Alt触发
 #Include KeyboardHook.ahk
 
 ; ==================== 功能初始化 ====================
 ; 初始化macOS风格CapsLock功能
-; InitMacOSCapsLock()
+InitMacOSCapsLock()
 
 ; 初始化键盘钩子功能
 InitKeyboardHook()
