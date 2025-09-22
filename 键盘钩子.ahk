@@ -1,16 +1,16 @@
 ﻿; main.ahk - 主程序文件
 ; ==================== 权限检查和提权 ====================
 ; 检查是否具有管理员权限，如果没有则自动提权
-; if !A_IsAdmin {
-;     try {
-;         ; 以管理员权限重新运行脚本
-;         Run *RunAs "%A_AhkPath%" "%A_ScriptFullPath%"
-;         ExitApp
-;     } catch {
-;         MsgBox, 16, 权限错误, 无法获取管理员权限。`n请手动以管理员身份运行此脚本。
-;         ExitApp
-;     }
-; }
+if !A_IsAdmin {
+    try {
+        ; 以管理员权限重新运行脚本
+        Run *RunAs "%A_AhkPath%" "%A_ScriptFullPath%"
+        ExitApp
+    } catch {
+        MsgBox, 16, 权限错误, 无法获取管理员权限。`n请手动以管理员身份运行此脚本。
+        ExitApp
+    }
+}
 
 ; ==================== AutoHotkey 指令 ====================
 ; 确保只有一个脚本实例运行，防止重复启动
